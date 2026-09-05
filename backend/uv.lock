@@ -276,12 +276,14 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "fastapi" },
+    { name = "python-dotenv" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.141.1" },
+    { name = "python-dotenv", specifier = ">=1.2.3" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.52.4" },
 ]
 

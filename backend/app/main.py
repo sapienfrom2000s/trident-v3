@@ -1,6 +1,11 @@
+import os
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 
-app = FastAPI(title="Trident API")
+load_dotenv(".env.development")
+
+app = FastAPI(title=os.environ.get("APP_NAME", "Trident API"))
 
 @app.get("/health")
 def health() -> dict[str, str]:
