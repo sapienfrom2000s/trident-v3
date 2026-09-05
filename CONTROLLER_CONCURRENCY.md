@@ -89,3 +89,12 @@ its next queued event until the current one's `await` has returned, whether that
   code without freezing the event loop.
 - Concurrency across _different_ objects comes from `asyncio` task switching;
   the _same_ object's handlers always run strictly in order.
+
+## Aside: the same model runs behind FastAPI, via uvicorn
+
+`uvicorn` is the ASGI server that actually runs a FastAPI app — it predates
+FastAPI (FastAPI was built afterward on top of Starlette, using uvicorn as its
+recommended server). Built on `uvloop`/`httptools` (the `[standard]` extra), it
+runs each request as a cheap coroutine parked on I/O rather than a blocked
+thread, so one process holds many concurrent in-flight requests. Same "many
+coroutines, one event loop".
