@@ -4,6 +4,16 @@ Kubernetes-native CI/CD system. See [DESIGN.md](DESIGN.md) for the architecture
 and [CONTROLLER_CONCURRENCY.md](CONTROLLER_CONCURRENCY.md) for how the
 controller's concurrency model works.
 
+## One-time setup
+
+```
+git config core.hooksPath .githooks
+```
+
+Enables the repo's pre-commit hook (formatting + running backend/frontend tests
+for whichever side you touched) — see
+[.githooks/pre-commit](.githooks/pre-commit).
+
 ## Phase 0 — local dev
 
 Backend and frontend run as two separate local processes, talking to each other

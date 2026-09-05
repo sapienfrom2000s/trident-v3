@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+files=$(git diff --cached --name-only --diff-filter=ACM -- '*.js' '*.jsx' '*.ts' '*.tsx' '*.json' '*.md' '*.css' '*.yml' '*.yaml')
+
+if [ -n "$files" ]; then
+  unformatted=$(npx --no-install prettier --config .prettierrc.json --check $files 2>&1) || {
+    echo "$unformatted"
+    echo
+    echo "Prettier check failed. Run: npx prettier --config .prettierrc.json --write $files"
+    exit 1
+  }
+fi
+
+staged=$(git diff --cached --name-only --diff-filter=ACM)
+
+if echo "$staged" | grep -q '^backend/'; then
+  echo "Running backend tests..."
+  (cd backend && uv run pytest) || {
+    echo
+    echo "Backend tests failed. Fix them before committing."
+    exit 1
+  }
+fi
+
+if echo "$staged" | grep -q '^frontend/'; then
+  echo "Running frontend tests..."
+  (cd frontend && pnpm test) || {
+    echo
+    echo "Frontend tests failed. Fix them before committing."
+    exit 1
+  }
+fi
