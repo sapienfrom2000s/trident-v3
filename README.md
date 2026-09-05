@@ -48,3 +48,22 @@ With both processes running, open <http://localhost:5173> (Vite prints the
 actual URL on startup — it picks a different port automatically if 5173 is
 already taken) — the page should show "Backend health: ok", fetched live from
 the backend through the proxy.
+
+## Phase 1 — local Kubernetes cluster
+
+Uses [OrbStack](https://orbstack.dev/) as the container runtime (lower idle
+memory/CPU than Docker Desktop) and [kind](https://kind.sigs.k8s.io/) for the
+cluster itself.
+
+```
+brew install --cask orbstack   # one-time; open it once to finish setup
+brew install kind
+
+kind create cluster --name trident-dev
+kubectl cluster-info --context kind-trident-dev
+```
+
+`kind create cluster` automatically points your kubeconfig at the new cluster's
+context (`kind-trident-dev`) — no separate context-switch step needed. Switch
+back later with `kubectl config use-context <name>` if you have other clusters
+configured.
