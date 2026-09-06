@@ -1,0 +1,10 @@
+apiVersion: trident.dev/v1
+kind: PipelineRun
+metadata:
+  name: sample-run
+spec:
+  repo: https://github.com/example/repo
+  commit: abc123
+  steps:
+    - name: build
+      image: alpine

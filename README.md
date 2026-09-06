@@ -59,3 +59,8 @@ kubectl apply -f manifests/crds/pipelinerun-crd.yaml
 kubectl get crd pipelineruns.trident.dev
 kubectl get pipelineruns
 ```
+
+```
+kubectl apply -f manifests/samples/pipelinerun-sample.yaml
+kubectl get pipelinerun sample-run
+```
