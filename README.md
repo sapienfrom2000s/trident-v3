@@ -64,3 +64,14 @@ kubectl get pipelineruns
 kubectl apply -f manifests/samples/pipelinerun-sample.yaml
 kubectl get pipelinerun sample-run
 ```
+
+### Controller RBAC
+
+```
+kubectl apply -f manifests/rbac/controller-rbac.yaml
+```
+
+Creates the `trident-controller` ServiceAccount, Role, and RoleBinding the
+controller runs as — grants `pods` create/get/list/watch/delete and
+`pipelineruns` + `pipelineruns/status` get/list/watch/patch, scoped to
+`default`.
