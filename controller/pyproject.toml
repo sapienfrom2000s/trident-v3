@@ -1,0 +1,13 @@
+[project]
+name = "trident-controller"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "kopf>=1.44.6",
+    "kubernetes>=36.0.3",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.6",
+]
