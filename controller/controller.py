@@ -1,4 +1,5 @@
 import kopf
+from kubernetes import client
 
 CLONE_SCRIPT = 'git clone "$1" repo && cd repo && git checkout "$2" && echo done'
 
@@ -25,8 +26,11 @@ def build_pod_spec(name: str, spec: dict) -> dict:
 
 
 @kopf.on.create("trident.dev", "v1", "pipelineruns")
-def on_create(name, spec, body, **kwargs):
+def on_create(name, namespace, spec, body, **kwargs):
     pod = build_pod_spec(name, spec)
 
     # body is the whole pipelinerun object
     kopf.adopt(pod, owner=body)
+
+    v1 = client.CoreV1Api()
+    v1.create_namespaced_pod(namespace=namespace, body=pod)
