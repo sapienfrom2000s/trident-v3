@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 import kopf
 from kubernetes import client
 
@@ -26,11 +28,19 @@ def build_pod_spec(name: str, spec: dict) -> dict:
 
 
 @kopf.on.create("trident.dev", "v1", "pipelineruns")
-def on_create(name, namespace, spec, body, **kwargs):
+def on_create(body, **kwargs):
+    name = kwargs["name"]
+    namespace = kwargs["namespace"]
+    spec = kwargs["spec"]
+    patch = kwargs["patch"]
+
     pod = build_pod_spec(name, spec)
 
     # body is the whole pipelinerun object
     kopf.adopt(pod, owner=body)
 
     v1 = client.CoreV1Api()
-    v1.create_namespaced_pod(namespace=namespace, body=pod)
+    created_pod = v1.create_namespaced_pod(namespace=namespace, body=pod)
+
+    patch.status["podName"] = created_pod.metadata.name  # pyright: ignore
+    patch.status["startTime"] = datetime.now(UTC).isoformat()
