@@ -15,15 +15,15 @@ Enables the repo's pre-commit hook — see
 
 ## Local dev
 
-### Backend
+### API
 
 ```
-cd backend
+cd api
 uv sync
 uv run uvicorn app.main:app --reload --port 8000
 ```
 
-See [backend/README.md](backend/README.md).
+See [api/README.md](api/README.md).
 
 ### Frontend
 

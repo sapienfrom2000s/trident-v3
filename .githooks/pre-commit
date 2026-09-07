@@ -14,11 +14,11 @@ fi
 
 staged=$(git diff --cached --name-only --diff-filter=ACM)
 
-if echo "$staged" | grep -q '^backend/'; then
-  echo "Running backend tests..."
-  (cd backend && uv run pytest) || {
+if echo "$staged" | grep -q '^api/'; then
+  echo "Running api tests..."
+  (cd api && uv run pytest) || {
     echo
-    echo "Backend tests failed. Fix them before committing."
+    echo "Api tests failed. Fix them before committing."
     exit 1
   }
 fi

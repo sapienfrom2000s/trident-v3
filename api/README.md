@@ -1,4 +1,4 @@
-# Trident backend
+# Trident API
 
 FastAPI app, managed with `uv`.
 

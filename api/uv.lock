@@ -394,7 +394,7 @@ wheels = [
 ]
 
 [[package]]
-name = "trident-backend"
+name = "trident-api"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

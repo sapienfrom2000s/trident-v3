@@ -1,7 +1,7 @@
 [project]
-name = "trident-backend"
+name = "trident-api"
 version = "0.1.0"
-description = "Trident v3 backend"
+description = "Trident v3 API"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
