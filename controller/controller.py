@@ -25,5 +25,6 @@ def build_pod_spec(name: str, spec: dict) -> dict:
 
 
 @kopf.on.create("trident.dev", "v1", "pipelineruns")
-def on_create(name, spec, **kwargs):
-    build_pod_spec(name, spec)
+def on_create(name, spec, body, **kwargs):
+    pod = build_pod_spec(name, spec)
+    kopf.adopt(pod, owner=body)
