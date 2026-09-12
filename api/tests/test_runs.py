@@ -167,8 +167,8 @@ def test_post_run_creates_pipelinerun() -> None:
 
 def test_post_run_returns_409_when_already_exists() -> None:
     with patch("app.runs.custom_objects_api") as custom_objects_api:
-        custom_objects_api.return_value.create_namespaced_custom_object.side_effect = (
-            ApiException(status=409)
+        custom_objects_api.return_value.create_namespaced_custom_object.side_effect = ApiException(
+            status=409
         )
         response = client.post(
             "/runs",
