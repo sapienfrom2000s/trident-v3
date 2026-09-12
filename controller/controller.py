@@ -53,9 +53,12 @@ def find_owning_pipelinerun(owner_references: list[dict] | None) -> str | None:
     return None
 
 
+TERMINAL_PHASES = ("Succeeded", "Failed")
+
+
 def build_pipelinerun_status_patch(phase: str) -> dict:
     status = {"phase": phase}
-    if phase in ("Succeeded", "Failed"):
+    if phase in TERMINAL_PHASES:
         status["completionTime"] = datetime.now(UTC).isoformat()
     return status
 
@@ -67,7 +70,7 @@ def build_pipelinerun_status_patch(phase: str) -> dict:
     field="status.phase",
     when=lambda body, **_: find_owning_pipelinerun(body["metadata"].get("ownerReferences")) is not None,  # pyright: ignore
 )
-def on_pod_phase_change(namespace, new, body, **kwargs):
+def on_pod_phase_change(namespace, new, name, body, **kwargs):
     pipelinerun_name = find_owning_pipelinerun(body["metadata"].get("ownerReferences"))  # pyright: ignore
 
     api = client.CustomObjectsApi()
@@ -79,3 +82,7 @@ def on_pod_phase_change(namespace, new, body, **kwargs):
         name=pipelinerun_name,
         body={"status": build_pipelinerun_status_patch(new)},  # pyright: ignore
     )
+
+    if new in TERMINAL_PHASES:
+        v1 = client.CoreV1Api()
+        v1.delete_namespaced_pod(name=name, namespace=namespace)
