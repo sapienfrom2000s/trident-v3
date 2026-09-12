@@ -4,7 +4,12 @@ from fastapi.testclient import TestClient
 from kubernetes.client.exceptions import ApiException
 
 from app.main import app
-from app.runs import pipelinerun_to_detail, pipelinerun_to_summary
+from app.runs import (
+    CreateRunRequest,
+    build_pipelinerun_object,
+    pipelinerun_to_detail,
+    pipelinerun_to_summary,
+)
 
 client = TestClient(app)
 
@@ -109,3 +114,70 @@ def test_get_run_detail_returns_404_when_not_found() -> None:
         response = client.get("/runs/does-not-exist")
 
     assert response.status_code == 404
+
+
+def test_build_pipelinerun_object_from_request() -> None:
+    req = CreateRunRequest(
+        name="new-run",
+        repo="https://example.com/r.git",
+        commit="abc123",
+        steps=[{"name": "build", "image": "alpine"}],
+    )
+
+    obj = build_pipelinerun_object(req)
+
+    assert obj["apiVersion"] == "trident.dev/v1"
+    assert obj["kind"] == "PipelineRun"
+    assert obj["metadata"]["name"] == "new-run"
+    assert obj["spec"] == {
+        "repo": "https://example.com/r.git",
+        "commit": "abc123",
+        "steps": [{"name": "build", "image": "alpine"}],
+    }
+
+
+def test_post_run_creates_pipelinerun() -> None:
+    created_obj = {
+        "metadata": {"name": "new-run"},
+        "status": {},
+    }
+
+    with patch("app.runs.custom_objects_api") as custom_objects_api:
+        custom_objects_api.return_value.create_namespaced_custom_object.return_value = created_obj
+        response = client.post(
+            "/runs",
+            json={
+                "name": "new-run",
+                "repo": "https://example.com/r.git",
+                "commit": "abc123",
+                "steps": [{"name": "build", "image": "alpine"}],
+            },
+        )
+
+    assert response.status_code == 201
+    assert response.json() == {
+        "name": "new-run",
+        "phase": None,
+        "start_time": None,
+        "completion_time": None,
+    }
+    _, kwargs = custom_objects_api.return_value.create_namespaced_custom_object.call_args
+    assert kwargs["body"]["spec"]["repo"] == "https://example.com/r.git"
+
+
+def test_post_run_returns_409_when_already_exists() -> None:
+    with patch("app.runs.custom_objects_api") as custom_objects_api:
+        custom_objects_api.return_value.create_namespaced_custom_object.side_effect = (
+            ApiException(status=409)
+        )
+        response = client.post(
+            "/runs",
+            json={
+                "name": "sample-run",
+                "repo": "https://example.com/r.git",
+                "commit": "abc123",
+                "steps": [{"name": "build", "image": "alpine"}],
+            },
+        )
+
+    assert response.status_code == 409

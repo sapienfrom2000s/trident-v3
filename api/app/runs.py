@@ -55,3 +55,31 @@ def get_run(name: str) -> RunDetail:
         group=GROUP, version=VERSION, namespace=NAMESPACE, plural=PLURAL, name=name
     )
     return pipelinerun_to_detail(obj)
+
+
+class CreateRunRequest(BaseModel):
+    name: str
+    repo: str
+    commit: str
+    steps: list[dict]
+
+
+def build_pipelinerun_object(req: CreateRunRequest) -> dict:
+    return {
+        "apiVersion": f"{GROUP}/{VERSION}",
+        "kind": "PipelineRun",
+        "metadata": {"name": req.name},
+        "spec": {"repo": req.repo, "commit": req.commit, "steps": req.steps},
+    }
+
+
+def create_run(req: CreateRunRequest) -> RunSummary:
+    api = custom_objects_api()
+    created = api.create_namespaced_custom_object(
+        group=GROUP,
+        version=VERSION,
+        namespace=NAMESPACE,
+        plural=PLURAL,
+        body=build_pipelinerun_object(req),
+    )
+    return pipelinerun_to_summary(created)

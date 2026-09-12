@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException
 from kubernetes.client.exceptions import ApiException
 
 from app.k8s import load_k8s_config
-from app.runs import RunDetail, RunSummary, get_run, list_runs
+from app.runs import CreateRunRequest, RunDetail, RunSummary, create_run, get_run, list_runs
 
 load_dotenv(".env.development")
 
@@ -38,4 +38,14 @@ def get_run_detail(name: str) -> RunDetail:
     except ApiException as e:
         if e.status == 404:
             raise HTTPException(status_code=404, detail="PipelineRun not found") from e
+        raise
+
+
+@app.post("/runs", status_code=201)
+def post_run(req: CreateRunRequest) -> RunSummary:
+    try:
+        return create_run(req)
+    except ApiException as e:
+        if e.status == 409:
+            raise HTTPException(status_code=409, detail="PipelineRun already exists") from e
         raise
