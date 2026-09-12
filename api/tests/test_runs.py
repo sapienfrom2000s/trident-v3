@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
@@ -7,6 +8,7 @@ from app.main import app
 from app.runs import (
     CreateRunRequest,
     build_pipelinerun_object,
+    get_run_logs,
     pipelinerun_to_detail,
     pipelinerun_to_summary,
 )
@@ -181,3 +183,72 @@ def test_post_run_returns_409_when_already_exists() -> None:
         )
 
     assert response.status_code == 409
+
+
+def _pipelinerun_obj(phase: str | None, pod_name: str | None = None) -> dict:
+    status = {}
+    if phase is not None:
+        status["phase"] = phase
+    if pod_name is not None:
+        status["podName"] = pod_name
+    return {"metadata": {"name": "sample-run"}, "status": status}
+
+
+def test_get_run_logs_reads_configmap_when_terminal() -> None:
+    obj = _pipelinerun_obj("Succeeded", pod_name="sample-run-abc12")
+
+    with (
+        patch("app.runs.custom_objects_api") as custom_objects_api,
+        patch("app.runs.core_v1_api") as core_v1_api,
+    ):
+        custom_objects_api.return_value.get_namespaced_custom_object.return_value = obj
+        core_v1_api.return_value.read_namespaced_config_map.return_value = SimpleNamespace(
+            data={"log": "build succeeded\n"}
+        )
+
+        logs = get_run_logs("sample-run")
+
+    assert logs == "build succeeded\n"
+    core_v1_api.return_value.read_namespaced_config_map.assert_called_once_with(
+        name="sample-run-logs", namespace="default"
+    )
+    core_v1_api.return_value.read_namespaced_pod_log.assert_not_called()
+
+
+def test_get_run_logs_reads_pod_log_when_running() -> None:
+    obj = _pipelinerun_obj("Running", pod_name="sample-run-abc12")
+
+    with (
+        patch("app.runs.custom_objects_api") as custom_objects_api,
+        patch("app.runs.core_v1_api") as core_v1_api,
+    ):
+        custom_objects_api.return_value.get_namespaced_custom_object.return_value = obj
+        core_v1_api.return_value.read_namespaced_pod_log.return_value = SimpleNamespace(
+            data=b"still building...\n"
+        )
+
+        logs = get_run_logs("sample-run")
+
+    assert logs == "still building...\n"
+    core_v1_api.return_value.read_namespaced_config_map.assert_not_called()
+
+
+def test_get_run_logs_returns_empty_when_pending_with_no_pod_yet() -> None:
+    obj = _pipelinerun_obj(None)
+
+    with patch("app.runs.custom_objects_api") as custom_objects_api:
+        custom_objects_api.return_value.get_namespaced_custom_object.return_value = obj
+
+        logs = get_run_logs("sample-run")
+
+    assert logs == ""
+
+
+def test_get_run_logs_endpoint_returns_404_when_pipelinerun_missing() -> None:
+    with patch("app.runs.custom_objects_api") as custom_objects_api:
+        custom_objects_api.return_value.get_namespaced_custom_object.side_effect = ApiException(
+            status=404
+        )
+        response = client.get("/runs/does-not-exist/logs")
+
+    assert response.status_code == 404

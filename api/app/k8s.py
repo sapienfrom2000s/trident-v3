@@ -10,3 +10,7 @@ def load_k8s_config() -> None:
 
 def custom_objects_api() -> client.CustomObjectsApi:
     return client.CustomObjectsApi()
+
+
+def core_v1_api() -> client.CoreV1Api:
+    return client.CoreV1Api()

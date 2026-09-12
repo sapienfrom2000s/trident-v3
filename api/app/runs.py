@@ -1,11 +1,12 @@
 from pydantic import BaseModel
 
-from app.k8s import custom_objects_api
+from app.k8s import core_v1_api, custom_objects_api
 
 GROUP = "trident.dev"
 VERSION = "v1"
 PLURAL = "pipelineruns"
 NAMESPACE = "default"
+TERMINAL_PHASES = ("Succeeded", "Failed")
 
 
 class RunSummary(BaseModel):
@@ -83,3 +84,20 @@ def create_run(req: CreateRunRequest) -> RunSummary:
         body=build_pipelinerun_object(req),
     )
     return pipelinerun_to_summary(created)
+
+
+def get_run_logs(name: str) -> str:
+    detail = get_run(name)
+    v1 = core_v1_api()
+
+    if detail.phase in TERMINAL_PHASES:
+        configmap = v1.read_namespaced_config_map(name=f"{name}-logs", namespace=NAMESPACE)
+        return (configmap.data or {}).get("log", "")
+
+    if detail.pod_name:
+        log_response = v1.read_namespaced_pod_log(
+            name=detail.pod_name, namespace=NAMESPACE, follow=False, _preload_content=False
+        )
+        return log_response.data.decode("utf-8", errors="replace")
+
+    return ""

@@ -4,10 +4,19 @@ from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import PlainTextResponse
 from kubernetes.client.exceptions import ApiException
 
 from app.k8s import load_k8s_config
-from app.runs import CreateRunRequest, RunDetail, RunSummary, create_run, get_run, list_runs
+from app.runs import (
+    CreateRunRequest,
+    RunDetail,
+    RunSummary,
+    create_run,
+    get_run,
+    get_run_logs,
+    list_runs,
+)
 
 load_dotenv(".env.development")
 
@@ -38,6 +47,16 @@ def get_run_detail(name: str) -> RunDetail:
     except ApiException as e:
         if e.status == 404:
             raise HTTPException(status_code=404, detail="PipelineRun not found") from e
+        raise
+
+
+@app.get("/runs/{name}/logs", response_class=PlainTextResponse)
+def get_run_logs_endpoint(name: str) -> str:
+    try:
+        return get_run_logs(name)
+    except ApiException as e:
+        if e.status == 404:
+            raise HTTPException(status_code=404, detail="Logs not found") from e
         raise
 
 
