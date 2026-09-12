@@ -1,4 +1,16 @@
-CLONE_SCRIPT = 'git clone "$1" repo && cd repo && git checkout "$2" && echo done'
+from pathlib import Path
+
+BUILD_SCRIPT_PATH = Path(__file__).parent / "buildscript" / "build.go"
+BUILD_SCRIPT = BUILD_SCRIPT_PATH.read_text()
+
+SETUP_SCRIPT = f"""
+set -e
+apk add --no-cache git >/dev/null
+cat > /tmp/build.go <<'GOEOF'
+{BUILD_SCRIPT}
+GOEOF
+go run /tmp/build.go "$1" "$2"
+"""
 
 
 def build_pod_spec(name: str, spec: dict) -> dict:
@@ -14,8 +26,8 @@ def build_pod_spec(name: str, spec: dict) -> dict:
             "containers": [
                 {
                     "name": "build",
-                    "image": "alpine/git",
-                    "command": ["sh", "-c", CLONE_SCRIPT, "--", repo, commit],
+                    "image": "golang:1.23-alpine",
+                    "command": ["sh", "-c", SETUP_SCRIPT, "--", repo, commit],
                 }
             ],
         },

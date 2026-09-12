@@ -76,6 +76,14 @@ Each PipelineRun becomes one throwaway Pod:
   root/privileged access to the host.
 - When the Pod finishes, it's gone. Nothing to clean up by hand.
 
+**Current MVP shape** (before the init-containers-per-step model above is
+built): a single container clones `spec.repo`, checks out `spec.commit`, and if
+the repo has a `.trident.yml` at its root, runs it as a flat list of shell
+commands, in order, stopping on the first failure.
+
+No conditionals, no parallelism, no per-step images yet — that's what the
+init-containers-per-step model above is for, once it's built.
+
 ### 4. Who's allowed to do what: login + permissions
 
 - **Login**: users authenticate through an existing identity provider (Dex,
@@ -124,9 +132,9 @@ build artifacts. So:
 
 ## Open questions to decide before building
 
-1. **Step definition format** — how much pipeline-YAML syntax do we support
-   (sequential steps only, or also conditionals/parallel steps)? Simpler is
-   better to start.
+1. **Step definition format** — resolved for the MVP: `.trident.yml` is a flat
+   list of shell commands, run in order (see section 3). Conditionals, parallel
+   steps, and per-step images are still undecided.
 2. **Multi-tenancy** — one CRD across the whole cluster, or a namespace-per-team
    convention enforced via RBAC?
 3. **Retention** — how long do finished PipelineRun objects stick around before

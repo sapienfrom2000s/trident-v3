@@ -25,7 +25,7 @@ def test_build_pod_spec_container_image_and_command_from_spec():
     )
     [container] = pod["spec"]["containers"]
 
-    assert container["image"] == "alpine/git"
+    assert container["image"] == "golang:1.23-alpine"
     assert container["command"][-2:] == ["https://example.com/r.git", "abc123"]
 
 
