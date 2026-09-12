@@ -244,6 +244,21 @@ def test_get_run_logs_returns_empty_when_pending_with_no_pod_yet() -> None:
     assert logs == ""
 
 
+def test_get_run_logs_returns_empty_when_container_not_started_yet() -> None:
+    obj = _pipelinerun_obj("Pending", pod_name="sample-run-abc12")
+
+    with (
+        patch("app.runs.custom_objects_api") as custom_objects_api,
+        patch("app.runs.core_v1_api") as core_v1_api,
+    ):
+        custom_objects_api.return_value.get_namespaced_custom_object.return_value = obj
+        core_v1_api.return_value.read_namespaced_pod_log.side_effect = ApiException(status=400)
+
+        logs = get_run_logs("sample-run")
+
+    assert logs == ""
+
+
 def test_get_run_logs_endpoint_returns_404_when_pipelinerun_missing() -> None:
     with patch("app.runs.custom_objects_api") as custom_objects_api:
         custom_objects_api.return_value.get_namespaced_custom_object.side_effect = ApiException(

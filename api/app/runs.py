@@ -1,3 +1,4 @@
+from kubernetes.client.exceptions import ApiException
 from pydantic import BaseModel
 
 from app.k8s import core_v1_api, custom_objects_api
@@ -95,9 +96,14 @@ def get_run_logs(name: str) -> str:
         return (configmap.data or {}).get("log", "")
 
     if detail.pod_name:
-        log_response = v1.read_namespaced_pod_log(
-            name=detail.pod_name, namespace=NAMESPACE, follow=False, _preload_content=False
-        )
+        try:
+            log_response = v1.read_namespaced_pod_log(
+                name=detail.pod_name, namespace=NAMESPACE, follow=False, _preload_content=False
+            )
+        except ApiException as e:
+            if e.status == 400:
+                return ""
+            raise
         return log_response.data.decode("utf-8", errors="replace")
 
     return ""
