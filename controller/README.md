@@ -6,7 +6,7 @@ Kopf-based controller, managed with `uv`.
 
 ```
 uv sync
-uv run kopf run controller.py --all-namespaces
+uv run kopf run controller.py --namespace=default
 ```
 
 Requires `kubectl config current-context` to be `kind-trident-dev` (or whichever

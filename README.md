@@ -71,10 +71,10 @@ kubectl get pipelinerun sample-run
 kubectl apply -f manifests/rbac/controller-rbac.yaml
 ```
 
-Creates the `trident-controller` ServiceAccount, Role, and RoleBinding the
-controller runs as — grants `pods` create/get/list/watch/delete and
-`pipelineruns` + `pipelineruns/status` get/list/watch/patch, scoped to
-`default`.
+Creates the `trident-controller` account the controller runs as. Namespaced to
+`default`: `pods` (+ `pods/log`, `configmaps`) and `pipelineruns` (+ `status`).
+Plus a small ClusterRole for two things Kopf always checks at startup regardless
+of namespace scope: the PipelineRun CRD and the list of namespaces.
 
 ### API RBAC
 
