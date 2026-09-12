@@ -82,6 +82,10 @@ Ordering doesn't change between the two. Either way, an object's task won't pull
 its next queued event until the current one's `await` has returned, whether that
 `await` is sitting on a thread-pool future or a plain coroutine.
 
+**Why this project uses the sync client:** it's simpler. Plain functions, no
+`async`/`await` to get right. Async only pays off at higher scale, and we're
+nowhere near that yet.
+
 ## Summary
 
 - Many coroutines, one event loop, one thread doing the scheduling.
