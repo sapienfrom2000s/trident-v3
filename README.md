@@ -75,3 +75,16 @@ Creates the `trident-controller` ServiceAccount, Role, and RoleBinding the
 controller runs as — grants `pods` create/get/list/watch/delete and
 `pipelineruns` + `pipelineruns/status` get/list/watch/patch, scoped to
 `default`.
+
+### API RBAC
+
+```
+kubectl apply -f manifests/rbac/api-rbac.yaml
+```
+
+Creates a `trident-api` account that can only read and create `pipelineruns` —
+nothing else.
+
+It does nothing yet. The API isn't deployed to the cluster, so nobody uses this
+account. Right now you run the API on your own laptop, so it just uses your own
+admin access. This account only matters once we deploy the API as a Pod.
