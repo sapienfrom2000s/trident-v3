@@ -82,8 +82,8 @@ of namespace scope: the PipelineRun CRD and the list of namespaces.
 kubectl apply -f manifests/rbac/api-rbac.yaml
 ```
 
-Creates a `trident-api` account that can only read and create `pipelineruns` —
-nothing else.
+Creates a `trident-api` account that can read/create `pipelineruns`, read
+`configmaps` and Pod logs.
 
 It does nothing yet. The API isn't deployed to the cluster, so nobody uses this
 account. Right now you run the API on your own laptop, so it just uses your own
