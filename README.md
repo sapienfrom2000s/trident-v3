@@ -114,6 +114,27 @@ See [api/README.md](api/README.md) for the full endpoint list.
 
 ## Usage
 
+### `.trident.yml`
+
+Drop this at the root of the repo being built to actually run something beyond a
+clone + checkout — a flat YAML list of shell commands, run in order, stopping at
+the first failure:
+
+```yaml
+- echo "building"
+- go build ./...
+- go test ./...
+```
+
+> [!IMPORTANT]
+>
+> Commands run inside a `golang:1.23-alpine` container with `git` installed —
+> nothing else. A build that needs Node, Python, etc. must install it as an
+> explicit step first (e.g. `apk add --no-cache nodejs npm`). Per-step,
+> per-language images aren't built yet — see [Limitations](#limitations).
+
+### Creating a pipeline
+
 With the controller running, create a `PipelineRun` either via `kubectl`:
 
 ```yaml
@@ -145,25 +166,6 @@ curl -X POST http://localhost:8000/runs -H "Content-Type: application/json" -d '
   "steps": [{"name": "build", "image": "alpine"}]
 }'
 ```
-
-### `.trident.yml`
-
-Drop this at the root of the repo being built to actually run something beyond a
-clone + checkout — a flat YAML list of shell commands, run in order, stopping at
-the first failure:
-
-```yaml
-- echo "building"
-- go build ./...
-- go test ./...
-```
-
-> [!IMPORTANT]
->
-> Commands run inside a `golang:1.23-alpine` container with `git` installed —
-> nothing else. A build that needs Node, Python, etc. must install it as an
-> explicit step first (e.g. `apk add --no-cache nodejs npm`). Per-step,
-> per-language images aren't built yet — see [Limitations](#limitations).
 
 ### Checking on a run
 
