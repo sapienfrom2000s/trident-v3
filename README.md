@@ -25,22 +25,11 @@ uv run uvicorn app.main:app --reload --port 8000
 
 See [api/README.md](api/README.md).
 
-### Frontend
-
-```
-cd frontend
-pnpm install
-pnpm dev
-```
-
-Proxies `/api/*` to the backend on `:8000` — see
-[frontend/vite.config.js](frontend/vite.config.js) and
-[frontend/README.md](frontend/README.md).
-
 ### Confirming it works
 
-With both running, open <http://localhost:5173> — should show "Backend health:
-ok".
+```
+curl http://localhost:8000/health
+```
 
 ## Local Kubernetes cluster
 

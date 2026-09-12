@@ -31,12 +31,3 @@ if echo "$staged" | grep -q '^controller/'; then
     exit 1
   }
 fi
-
-if echo "$staged" | grep -q '^frontend/'; then
-  echo "Running frontend tests..."
-  (cd frontend && pnpm test) || {
-    echo
-    echo "Frontend tests failed. Fix them before committing."
-    exit 1
-  }
-fi
