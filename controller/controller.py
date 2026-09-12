@@ -53,6 +53,13 @@ def find_owning_pipelinerun(owner_references: list[dict] | None) -> str | None:
     return None
 
 
+def build_pipelinerun_status_patch(phase: str) -> dict:
+    status = {"phase": phase}
+    if phase in ("Succeeded", "Failed"):
+        status["completionTime"] = datetime.now(UTC).isoformat()
+    return status
+
+
 @kopf.on.field(
     "",
     "v1",
@@ -60,6 +67,15 @@ def find_owning_pipelinerun(owner_references: list[dict] | None) -> str | None:
     field="status.phase",
     when=lambda body, **_: find_owning_pipelinerun(body["metadata"].get("ownerReferences")) is not None,  # pyright: ignore
 )
-def on_pod_phase_change(**kwargs):
-    # Mapping this onto the owning PipelineRun's status.phase lands in THI-97.
-    pass
+def on_pod_phase_change(namespace, new, body, **kwargs):
+    pipelinerun_name = find_owning_pipelinerun(body["metadata"].get("ownerReferences"))  # pyright: ignore
+
+    api = client.CustomObjectsApi()
+    api.patch_namespaced_custom_object_status(
+        group="trident.dev",
+        version="v1",
+        namespace=namespace,
+        plural="pipelineruns",
+        name=pipelinerun_name,
+        body={"status": build_pipelinerun_status_patch(new)},  # pyright: ignore
+    )
