@@ -1,6 +1,6 @@
 import kopf
 
-from controller import build_pod_spec
+from controller import build_pod_spec, find_owning_pipelinerun
 
 
 def test_build_pod_spec_uses_generate_name_from_pipelinerun_name():
@@ -48,3 +48,26 @@ def test_owner_reference_points_at_pipelinerun():
     assert owner_ref["uid"] == "abc-123-uid"
     assert owner_ref["controller"] is True
     assert owner_ref["blockOwnerDeletion"] is True
+
+
+def test_find_owning_pipelinerun_returns_name_when_owned():
+    owner_references = [{"apiVersion": "trident.dev/v1", "kind": "PipelineRun", "name": "sample-run"}]
+
+    assert find_owning_pipelinerun(owner_references) == "sample-run"
+
+
+def test_find_owning_pipelinerun_ignores_owners_of_other_kinds():
+    owner_references = [{"apiVersion": "apps/v1", "kind": "ReplicaSet", "name": "some-replicaset"}]
+
+    assert find_owning_pipelinerun(owner_references) is None
+
+
+def test_find_owning_pipelinerun_ignores_other_groups_pipelinerun_kind():
+    owner_references = [{"apiVersion": "other.group/v1", "kind": "PipelineRun", "name": "sample-run"}]
+
+    assert find_owning_pipelinerun(owner_references) is None
+
+
+def test_find_owning_pipelinerun_returns_none_when_no_owners():
+    assert find_owning_pipelinerun(None) is None
+    assert find_owning_pipelinerun([]) is None

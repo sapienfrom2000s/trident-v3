@@ -44,3 +44,22 @@ def on_create(body, **kwargs):
 
     patch.status["podName"] = created_pod.metadata.name  # pyright: ignore
     patch.status["startTime"] = datetime.now(UTC).isoformat()
+
+
+def find_owning_pipelinerun(owner_references: list[dict] | None) -> str | None:
+    for ref in owner_references or []:
+        if ref.get("kind") == "PipelineRun" and ref.get("apiVersion", "").startswith("trident.dev/"):
+            return ref["name"]
+    return None
+
+
+@kopf.on.field(
+    "",
+    "v1",
+    "pods",
+    field="status.phase",
+    when=lambda body, **_: find_owning_pipelinerun(body["metadata"].get("ownerReferences")) is not None,  # pyright: ignore
+)
+def on_pod_phase_change(**kwargs):
+    # Mapping this onto the owning PipelineRun's status.phase lands in THI-97.
+    pass
