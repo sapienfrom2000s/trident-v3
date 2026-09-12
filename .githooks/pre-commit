@@ -23,6 +23,15 @@ if echo "$staged" | grep -q '^api/'; then
   }
 fi
 
+if echo "$staged" | grep -q '^controller/'; then
+  echo "Running controller tests..."
+  (cd controller && uv run pytest) || {
+    echo
+    echo "Controller tests failed. Fix them before committing."
+    exit 1
+  }
+fi
+
 if echo "$staged" | grep -q '^frontend/'; then
   echo "Running frontend tests..."
   (cd frontend && pnpm test) || {
