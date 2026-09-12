@@ -1,9 +1,10 @@
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
+from kubernetes.client.exceptions import ApiException
 
 from app.main import app
-from app.runs import pipelinerun_to_summary
+from app.runs import pipelinerun_to_detail, pipelinerun_to_summary
 
 client = TestClient(app)
 
@@ -60,3 +61,51 @@ def test_get_runs_returns_simplified_shape() -> None:
             "completion_time": None,
         }
     ]
+
+
+def test_pipelinerun_to_detail_includes_pod_name_and_log_placeholder() -> None:
+    obj = {
+        "metadata": {"name": "sample-run"},
+        "status": {"phase": "Running", "podName": "sample-run-abc12"},
+    }
+
+    detail = pipelinerun_to_detail(obj)
+
+    assert detail.pod_name == "sample-run-abc12"
+    assert detail.log_url is None
+
+
+def test_get_run_detail_returns_simplified_shape() -> None:
+    fake_obj = {
+        "metadata": {"name": "sample-run"},
+        "status": {
+            "phase": "Succeeded",
+            "startTime": "2026-09-12T00:00:00+00:00",
+            "completionTime": "2026-09-12T00:01:00+00:00",
+            "podName": "sample-run-abc12",
+        },
+    }
+
+    with patch("app.runs.custom_objects_api") as custom_objects_api:
+        custom_objects_api.return_value.get_namespaced_custom_object.return_value = fake_obj
+        response = client.get("/runs/sample-run")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "name": "sample-run",
+        "phase": "Succeeded",
+        "start_time": "2026-09-12T00:00:00+00:00",
+        "completion_time": "2026-09-12T00:01:00+00:00",
+        "pod_name": "sample-run-abc12",
+        "log_url": None,
+    }
+
+
+def test_get_run_detail_returns_404_when_not_found() -> None:
+    with patch("app.runs.custom_objects_api") as custom_objects_api:
+        custom_objects_api.return_value.get_namespaced_custom_object.side_effect = ApiException(
+            status=404
+        )
+        response = client.get("/runs/does-not-exist")
+
+    assert response.status_code == 404

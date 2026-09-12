@@ -3,10 +3,11 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from kubernetes.client.exceptions import ApiException
 
 from app.k8s import load_k8s_config
-from app.runs import RunSummary, list_runs
+from app.runs import RunDetail, RunSummary, get_run, list_runs
 
 load_dotenv(".env.development")
 
@@ -28,3 +29,13 @@ def health() -> dict[str, str]:
 @app.get("/runs")
 def get_runs() -> list[RunSummary]:
     return list_runs()
+
+
+@app.get("/runs/{name}")
+def get_run_detail(name: str) -> RunDetail:
+    try:
+        return get_run(name)
+    except ApiException as e:
+        if e.status == 404:
+            raise HTTPException(status_code=404, detail="PipelineRun not found") from e
+        raise
