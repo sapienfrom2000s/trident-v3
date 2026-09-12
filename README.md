@@ -72,7 +72,7 @@ git config core.hooksPath .githooks
 ```
 
 Enables the repo's pre-commit hook (runs the relevant test suite for whichever
-of `api/`, `controller/` you touched) — see
+of `api/`, `controller/` changed) — see
 [.githooks/pre-commit](.githooks/pre-commit).
 
 ### Local Kubernetes cluster
@@ -95,7 +95,7 @@ uv run kopf run controller.py --namespace=default
 ```
 
 Requires `kubectl config current-context` to be `kind-trident-dev` (or whichever
-cluster you're targeting) — `kopf run` has no `--context` flag of its own, it
+cluster is the target) — `kopf run` has no `--context` flag of its own, it
 follows the ambient kubeconfig context.
 
 ### Run the API (optional)
@@ -123,7 +123,7 @@ kind: PipelineRun
 metadata:
   name: my-run
 spec:
-  repo: https://github.com/your-org/your-repo
+  repo: https://github.com/example-org/example-repo
   commit: main # a branch name or a full SHA both work
   steps:
     - name: build
@@ -140,7 +140,7 @@ kubectl get pipelinerun my-run --watch
 ```bash
 curl -X POST http://localhost:8000/runs -H "Content-Type: application/json" -d '{
   "name": "my-run",
-  "repo": "https://github.com/your-org/your-repo",
+  "repo": "https://github.com/example-org/example-repo",
   "commit": "main",
   "steps": [{"name": "build", "image": "alpine"}]
 }'
@@ -148,9 +148,9 @@ curl -X POST http://localhost:8000/runs -H "Content-Type: application/json" -d '
 
 ### `.trident.yml`
 
-Drop this at the root of the repo you're building to actually run something
-beyond a clone + checkout — a flat YAML list of shell commands, run in order,
-stopping at the first failure:
+Drop this at the root of the repo being built to actually run something beyond a
+clone + checkout — a flat YAML list of shell commands, run in order, stopping at
+the first failure:
 
 ```yaml
 - echo "building"
@@ -161,7 +161,7 @@ stopping at the first failure:
 > [!IMPORTANT]
 >
 > Commands run inside a `golang:1.23-alpine` container with `git` installed —
-> nothing else. If your build needs Node, Python, etc., install it as an
+> nothing else. A build that needs Node, Python, etc. must install it as an
 > explicit step first (e.g. `apk add --no-cache nodejs npm`). Per-step,
 > per-language images aren't built yet — see [Limitations](#limitations).
 
