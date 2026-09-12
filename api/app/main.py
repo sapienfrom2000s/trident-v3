@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 
 from app.k8s import load_k8s_config
+from app.runs import RunSummary, list_runs
 
 load_dotenv(".env.development")
 
@@ -22,3 +23,8 @@ app = FastAPI(title=os.environ.get("APP_NAME", "Trident API"), lifespan=lifespan
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/runs")
+def get_runs() -> list[RunSummary]:
+    return list_runs()
